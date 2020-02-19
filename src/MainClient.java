@@ -4,6 +4,6 @@ public class MainClient
     {
         Client client = new Client();
 
-        client.ClienConnect();
+        client.ClientConnect();
     }
 }

@@ -5,20 +5,38 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class ClientHandler implements Runnable
+public class ServerClientHandler implements Runnable
 {
+    /**
+     * Field:
+     * Each client needs there own socket to communicate with the server
+     */
     private Socket client;
     /**
+     * Field:
      * BufferedReader is synchronized (thread safe) https://medium.com/@codespeaks/bufferedreader-vs-console-vs-scanner-in-java-74273bb280a7
      */
     private BufferedReader input;
     private PrintWriter output;
-    private ArrayList<ClientHandler> allClients;
+    private ArrayList<ServerClientHandler> allClients;
+    /**
+     * Field:
+     * The username of the clients
+     */
+    private String user;
 
-    public ClientHandler(Socket clientSocket, ArrayList<ClientHandler> allClients)
+
+    /**
+     * Overloadet constructor
+     * @param clientSocket
+     * @param allClients
+     * @param user
+     */
+    public ServerClientHandler(Socket clientSocket, ArrayList<ServerClientHandler> allClients, String user)
     {
         client = clientSocket;
         this.allClients = allClients; //The name should maybe change to something else
+        this.user = user;
         try
         {
             input = new BufferedReader(new InputStreamReader(client.getInputStream()));
@@ -32,6 +50,10 @@ public class ClientHandler implements Runnable
             e.printStackTrace(); //Uses System.err and should go to a log file
             System.err.println(e.getStackTrace());
         }
+        String result = "LIST" + getUserList() + " " + user;
+
+        outToAll(result);
+        output.println(result);
     }
 
     /**
@@ -56,38 +78,38 @@ public class ClientHandler implements Runnable
              * So this while is in the wrong class!
              */
             /**
-             * If a new user tries to join with the same name as an already active user, then an error message should be sent back to client.
-             * Client can try again with a new name.
-             * Protocol J_ER should be used
-             *
              * An active client can send user text message to the server that will just send a copy to all active clients in the client list.
              * Protocol DATA <<user_name>>: <<free text…>> should be used
              */
             while(true)
             {
                 String request = input.readLine();
+                String result = "";
                 /**
                  * Message from client, that is displayed out to all clients inclusive the client itself
                  */
-                int firstSpace = request.indexOf(" ");
 
-                /**
-                 * This should not be and if else statement, but something else!
-                 */
-                if (request.startsWith("Name"))
+                switch (request.substring(0,4))
                 {
-                    System.out.println("Name: " + request);
-                }
-                else if (request.startsWith("Message"))
-                {
-                    if (firstSpace != -1) //If firstSpace exist there is a message to display
-                    {
-                        outToAll(request.substring(firstSpace + 1));
-                    }
-                }
-                else
-                {
-                    System.out.println("Duplicate name"); //not right!!!
+                    case "DATA":
+                        String validate = "DATA " + user + ": ";
+                        if (!request.startsWith(validate))
+                        {
+                            output.println("J_ER Bad Syntax DATA <<user_name>>: <<free text…>>");
+                            continue;
+                        }
+
+                        result = request.substring(5);
+                        outToAll(result);
+                        break;
+                    case "IMAV":
+                    case "LIST":
+                        result = getUserList();
+                        output.println(result);
+                        break;
+                    default:
+                        System.err.println("Command Error - No such command exists!");
+                        break;
                 }
             }
         }
@@ -117,17 +139,26 @@ public class ClientHandler implements Runnable
         }
     }
 
+    /**
+     *
+     * @param message
+     */
     private void outToAll(String message)
     {
-        for (ClientHandler oneClient: allClients)
+        for (ServerClientHandler oneClient: allClients)
         {
-            /**
-             *  oneClient.out.println(message); is how the video wrote it, but does  System.out.println(message); do the same
-             *  because I get the error at out.
-             */
-            //oneClient.out.println(message);
-            System.out.println(message);
+            oneClient.output.println(message);
 
         }
+    }
+
+    private String getUserList()
+    {
+        String users = "";
+        for (ServerClientHandler oneClient: allClients)
+        {
+           users = users + " " + oneClient.user;
+        }
+        return users;
     }
 }

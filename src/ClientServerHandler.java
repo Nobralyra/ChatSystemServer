@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
-public class ServerConnection implements Runnable
+public class ClientServerHandler implements Runnable
 {
     private Socket server;
 
@@ -17,7 +17,7 @@ public class ServerConnection implements Runnable
      * server should (maybe with a specialized thread) check the active list, and delete clients that
      * stop sending heartbeat messages. Maybe the active list should include last heartbeat time.
      */
-    public ServerConnection(Socket serverSocket)
+    public ClientServerHandler(Socket serverSocket)
     {
         server = serverSocket;
 
@@ -62,7 +62,7 @@ public class ServerConnection implements Runnable
                 {
                     break;
                 }
-                System.out.println("Server respons with: " + serverResponse);
+                System.out.println(serverResponse);
             }
         }
         catch (IOException e)
