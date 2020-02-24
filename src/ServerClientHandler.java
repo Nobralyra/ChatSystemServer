@@ -118,10 +118,13 @@ public class ServerClientHandler implements Runnable
                 switch (request.substring(0,4))
                 {
                     case "DATA":
+                        /*
+                        Does not work
+                         */
                         String validate = "DATA " + User + ": ";
-                        if (!request.startsWith(validate))
+                        if (!isDATAValid(validate))
                         {
-                            output.println("J_ER Bad Syntax DATA <<user_name>>: <<free text…>>");
+                            output.println("J_ER 1236: Bad Syntax DATA <<user_name>>: <<free text…>> Max 250 user characters");
                             continue;
                         }
 
@@ -199,5 +202,12 @@ public class ServerClientHandler implements Runnable
            users = users + " " + oneClient.User;
         }
         return users;
+    }
+
+    public boolean isDATAValid(String validate){
+        if(validate.length() <= 250){
+            return true;
+        }
+        return false;
     }
 }
