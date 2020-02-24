@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.LocalTime;
 import java.util.ArrayList;
 
 public class ServerClientHandler implements Runnable
@@ -23,7 +24,13 @@ public class ServerClientHandler implements Runnable
      * Field:
      * The username of the clients
      */
-    private String user;
+    public String User;
+
+    /**
+     * Field:
+     * The heartbeat alive with time
+     */
+    public LocalTime IMAV = LocalTime.now();
 
 
     /**
@@ -32,11 +39,11 @@ public class ServerClientHandler implements Runnable
      * @param allClients
      * @param user
      */
-    public ServerClientHandler(Socket clientSocket, ArrayList<ServerClientHandler> allClients, String user)
+    public ServerClientHandler(Socket clientSocket, ArrayList<ServerClientHandler> allClients, String user )
     {
         client = clientSocket;
         this.allClients = allClients; //The name should maybe change to something else
-        this.user = user;
+        this.User = user;
         try
         {
             input = new BufferedReader(new InputStreamReader(client.getInputStream()));
@@ -54,6 +61,7 @@ public class ServerClientHandler implements Runnable
 
         outToAll(result);
         output.println(result);
+
     }
 
     /**
@@ -81,18 +89,30 @@ public class ServerClientHandler implements Runnable
              * An active client can send user text message to the server that will just send a copy to all active clients in the client list.
              * Protocol DATA <<user_name>>: <<free text…>> should be used
              */
-            while(true)
+            boolean run = true;
+            while(run)
             {
-                String request = input.readLine();
+                String request;
+                try {
+                request = input.readLine();
+                }
+                catch (Exception e)
+                {
+                    outToAll(User + " has left the chat room");
+                    User = "";
+                    outToAll("LIST" + getUserList());
+                    run = false;
+                    continue;
+                }
                 String result = "";
+
                 /**
                  * Message from client, that is displayed out to all clients inclusive the client itself
                  */
-
                 switch (request.substring(0,4))
                 {
                     case "DATA":
-                        String validate = "DATA " + user + ": ";
+                        String validate = "DATA " + User + ": ";
                         if (!request.startsWith(validate))
                         {
                             output.println("J_ER Bad Syntax DATA <<user_name>>: <<free text…>>");
@@ -102,9 +122,20 @@ public class ServerClientHandler implements Runnable
                         result = request.substring(5);
                         outToAll(result);
                         break;
+
+                    case "QUIT":
+                        outToAll(User + " has left the chat room");
+                        User = "";
+
+                        outToAll("LIST" + getUserList());
+                        run = false;
+                        break;
+
                     case "IMAV":
+                        IMAV = LocalTime.now();
+                        break;
                     case "LIST":
-                        result = getUserList();
+                        result = "LIST" + getUserList();
                         output.println(result);
                         break;
                     default:
@@ -157,7 +188,7 @@ public class ServerClientHandler implements Runnable
         String users = "";
         for (ServerClientHandler oneClient: allClients)
         {
-           users = users + " " + oneClient.user;
+           users = users + " " + oneClient.User;
         }
         return users;
     }
