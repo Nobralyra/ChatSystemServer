@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Client
 {
@@ -45,6 +47,16 @@ public class Client
              */
             new Thread(clientServerHandler).start();
 
+            Timer timer = new Timer();
+            timer.scheduleAtFixedRate(new TimerTask()
+            {
+                @Override
+                public void run()
+                {
+                   output.println("IMAV");
+                }
+            }, 60*1000, 60*1000);
+
             while(true)
             {
                 String command = keyboard.readLine();
@@ -56,15 +68,14 @@ public class Client
                 {
                     case "QUIT":
                         output.println("QUIT");
-                        socket.close();
                         System.exit(1);
                         break;
+
                     case "JOIN":
                         break;
                     case "DATA":
-                    case "IMAV":
                     case "LIST":
-                        output.println(command); //Is this still needed?
+                        output.println(command);
                     break;
                     default:
                         System.err.println("Command Error - No such command exists!");
