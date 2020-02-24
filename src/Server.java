@@ -47,27 +47,6 @@ public class Server
             ServerSocket listeners = new ServerSocket(port);
 
             /**
-             * Local variable:
-             * ArrayList that have the usernames of the clients who succesfully join the chat
-             */
-            ArrayList<String> users = new ArrayList<String>();
-
-            /**
-             * The server must accept clients (i.e. more than one) to join the chat system, using the protocol specified below.
-             * When a client joins, the server should maintain and update a list of all active clients.
-             * The server will need to save for each client the user name, IP address and Port number.
-             *
-             * If a new user tries to join with the same name as an already active user, then an error message should be sent back to client.
-             * Client can try again with a new name.
-             * Protocol J_ER should be used
-             *
-             * The Client must send a “heartbeat alive” message once every minute to the Server. The
-             * server should (maybe with a specialized thread) check the active list, and delete clients that
-             * stop sending heartbeat messages. Maybe the active list should include last heartbeat time.
-             */
-
-
-            /**
              * The while loop should run as long as the server is running (true)
              * The loop wait for a client to join
              */
@@ -107,10 +86,13 @@ public class Server
                 /**
                  * Nested if statement that runs if the request starts with JOIN
                  */
+                output = new PrintWriter(client.getOutputStream(), true);
+                System.out.println(request);
+
                 if (request.startsWith("JOIN"))
                 {
                     System.out.println(request); //Just so we can see what the server got a input
-                    output = new PrintWriter(client.getOutputStream(), true);
+
                     /**
                      * Because the request has more than the username, we need to split the request into an Array
                      * After the first space at index 1 (where the username is)
@@ -123,22 +105,24 @@ public class Server
                     nextUserName = nextUserName.substring(0, nextUserName.length() -1);
 
                     /**
-                     * If statement that returns true if ArrayList with joined users already
-                     * has the username the next client tries to join with
-                     * It sends a error messages to the client and closes the socket
-                     * The continue breaks the if statement (if the condition was true)
-                     * and continues into the other if statement
+                     * What is happening here?
                      */
-                    if(users.contains(nextUserName))
-                    {
-                        output.println("J_ER 1234: Duplicate Username");
-                        client.close();
-                        continue;
-                    }
-                    /**
-                     * adds the non-dubblicate username into the ArrayList of users
-                     */
-                    users.add(nextUserName);
+                    boolean existUserName = false;
+                        for (ServerClientHandler oneClient: allClients)
+                        {
+                            String current = oneClient.User;
+                            if(nextUserName.equals(current))
+                            {
+                                existUserName = true;
+                            }
+                        }
+                        if (existUserName)
+                        {
+                            output.println("J_ER 1234: Duplicate Username");
+                            client.close();
+                            continue;
+                        }
+
                     /**
                      * Client gets the message if they joined the server
                      */
@@ -151,7 +135,6 @@ public class Server
                  * allClients (ArrayList), nextUserName (the username from the client)
                  */
                 ServerClientHandler clientThread = new ServerClientHandler(client, allClients, nextUserName);
-
 
                 allClients.add(clientThread);
 
