@@ -12,11 +12,6 @@ public class ClientServerHandler implements Runnable
      */
     private BufferedReader input;
 
-    /**
-     * The Client must send a “heartbeat alive” message once every minute to the Server. The
-     * server should (maybe with a specialized thread) check the active list, and delete clients that
-     * stop sending heartbeat messages. Maybe the active list should include last heartbeat time.
-     */
     public ClientServerHandler(Socket serverSocket)
     {
         server = serverSocket;
