@@ -98,10 +98,16 @@ public class ServerClientHandler implements Runnable
                 }
                 catch (Exception e)
                 {
+                    //Maybe not needed
+                    /*
                     outToAll(User + " has left the chat room");
                     User = "";
                     outToAll("LIST" + getUserList());
+
+
                     run = false;
+
+                     */
                     continue;
                 }
                 String result = "";
@@ -124,6 +130,7 @@ public class ServerClientHandler implements Runnable
                         break;
 
                     case "QUIT":
+
                         outToAll(User + " has left the chat room");
                         User = "";
 
@@ -138,6 +145,7 @@ public class ServerClientHandler implements Runnable
                         result = "LIST" + getUserList();
                         output.println(result);
                         break;
+
                     default:
                         System.err.println("Command Error - No such command exists!");
                         break;
