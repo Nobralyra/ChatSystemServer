@@ -104,9 +104,10 @@ public class Server
                      */
                     nextUserName = nextUserName.substring(0, nextUserName.length() -1);
 
-                    /**
-                     * What is happening here?
-                     */
+
+                        /**
+                         * What is happening here?
+                         */
                     boolean existUserName = false;
                         for (ServerClientHandler oneClient: allClients)
                         {
@@ -119,6 +120,12 @@ public class Server
                         if (existUserName)
                         {
                             output.println("J_ER 1234: Duplicate Username");
+                            client.close();
+                            continue;
+                        }
+                        if(!isNextUserNameValid(nextUserName))
+                        {
+                            output.println("J_ER 1235: Username is max 12 chars long, only letters, digits, ‘-‘ and ‘_’ allowed");
                             client.close();
                             continue;
                         }
@@ -149,5 +156,14 @@ public class Server
             e.printStackTrace(); //Uses System.err and should go to a log file
             System.err.println(e.getStackTrace());
         }
+    }
+
+    public boolean isNextUserNameValid(String nextUserName)
+    {
+        if (nextUserName.length() <= 12 && nextUserName.matches("[a-zA-Z0-9_\\-]+"))
+        {
+            return true;
+        }
+        return false;
     }
 }
