@@ -121,14 +121,15 @@ public class ServerClientHandler implements Runnable
                         /*
                         Does not work
                          */
-                        String validate = "DATA " + User + ": ";
-                        if (!isDATAValid(validate))
+                        //String validate = "DATA " + User + ": ";
+                        result = request.substring(5);
+                        if (!isDATAValid(result))
                         {
                             output.println("J_ER 1236: Bad Syntax DATA <<user_name>>: <<free text…>> Max 250 user characters");
                             continue;
                         }
 
-                        result = request.substring(5);
+
                         outToAll(result);
                         break;
 
@@ -204,8 +205,9 @@ public class ServerClientHandler implements Runnable
         return users;
     }
 
-    public boolean isDATAValid(String validate){
-        if(validate.length() <= 250){
+
+    public boolean isDATAValid(String result){
+        if(result.length() <= 250){
             return true;
         }
         return false;
