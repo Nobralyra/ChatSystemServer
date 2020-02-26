@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ServerClientHandler implements Runnable
 {
@@ -32,9 +34,14 @@ public class ServerClientHandler implements Runnable
      */
     public LocalTime IMAV = LocalTime.now();
 
+    /**
+     * Calls on the static method in class SharedLog
+     */
+    Logger logger = SharedLog.getInstance();
+
 
     /**
-     * Overloadet constructor
+     * Overloadet constructor that Server uses to add the client in the ArrayList and allocates a thread
      * @param clientSocket
      * @param allClients
      * @param user
@@ -42,7 +49,7 @@ public class ServerClientHandler implements Runnable
     public ServerClientHandler(Socket clientSocket, ArrayList<ServerClientHandler> allClients, String user )
     {
         client = clientSocket;
-        this.allClients = allClients; //The name should maybe change to something else
+        this.allClients = allClients;
         this.User = user;
         try
         {
@@ -51,17 +58,16 @@ public class ServerClientHandler implements Runnable
         }
         catch (IOException e)
         {
-            /**
-             * https://stackoverflow.com/questions/12095378/difference-between-e-printstacktrace-and-system-out-printlne
-             */
-            e.printStackTrace(); //Uses System.err and should go to a log file
-            System.err.println(e.getStackTrace());
+            logger.log(Level.SEVERE, e.getStackTrace().toString());
         }
+        /**
+         * The client itself and all other clients gets the List of active clients each time it someone new join the server
+         */
         String result = "LIST" + getUserList() + " " + user;
 
         outToAll(result);
         output.println(result);
-
+        logger.log(Level.INFO,client.getRemoteSocketAddress().toString() + " " +  result);
     }
 
     /**
@@ -81,64 +87,88 @@ public class ServerClientHandler implements Runnable
         try
         {
             /**
-             * You must use threads in client and/or in server. The client should at the start ask the user
-             * his/her chat-name and then send a join message to the server.
-             * So this while is in the wrong class!
-             */
-            /**
-             * An active client can send user text message to the server that will just send a copy to all active clients in the client list.
-             * Protocol DATA <<user_name>>: <<free text…>> should be used
+             * The while loop should run forever until something change the run to false
              */
             boolean run = true;
             while(run)
             {
                 String request;
-                try {
-                request = input.readLine();
+                try
+                {
+                    /**
+                     * The command the client send
+                     * Trigger log
+                     */
+                    request = input.readLine();
+                    logger.log(Level.INFO,client.getRemoteSocketAddress().toString() + " " +  request);
                 }
                 catch (Exception e)
                 {
-                    //Maybe not needed
-                    /*
+                    /**
+                     * If the client disconnects all clients gets notified of which user left and updates the list
+                     * The while loop stops
+                     */
                     outToAll(User + " has left the chat room");
                     User = "";
                     outToAll("LIST" + getUserList());
-
+                    logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + "Client disconnected");
 
                     run = false;
 
+                    /**
+                     * Break the loop and jumps to the next iteration
                      */
                     continue;
                 }
-                String result = "";
+
+                String result;
 
                 /**
-                 * Message from client, that is displayed out to all clients inclusive the client itself
+                 * Switch on the 4 first charaters
                  */
                 switch (request.substring(0,4))
                 {
                     case "DATA":
-                        /*
-                        Does not work
+                        /**
+                         * Message from client that is displayed out to all clients inclusive the client itself
                          */
-                        //String validate = "DATA " + User + ": ";
-                        result = request.substring(5);
-                        if (!isDATAValid(result))
+
+                        /**
+                         * If message do not meet the requirements the client gets an errormessage, log the event, and jump to the next iteration of the loop
+                         */
+                        if (!IsDataValid(request))
                         {
-                            output.println("J_ER 1236: Bad Syntax DATA <<user_name>>: <<free text…>> Max 250 user characters");
+                            String response = "J_ER 3: Bad Syntax DATA <<user_name>>: <<free text…>> Max 250 user characters";
+                            output.println(response);
+                            logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + response);
                             continue;
                         }
 
-
+                        /**
+                         * Print out only the name and message and trigger the log
+                         */
+                        result = request.substring(5);
                         outToAll(result);
+                        logger.log(Level.INFO,client.getRemoteSocketAddress().toString() + " " +  result);
                         break;
 
                     case "QUIT":
+                        /**
+                         * If the client sends a QUIT all clients gets notified of which user left and updates the list
+                         * The while loop stops
+                         */
 
-                        outToAll(User + " has left the chat room");
+                        String response = User + " has left the chat room";
+                        outToAll(response);
+                        logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + response);
+
+
                         User = "";
 
-                        outToAll("LIST" + getUserList());
+                        response = "LIST" + getUserList();
+                        outToAll(response);
+                        logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + response);
+
                         run = false;
                         break;
 
@@ -146,12 +176,21 @@ public class ServerClientHandler implements Runnable
                         IMAV = LocalTime.now();
                         break;
                     case "LIST":
+                        /**
+                         * If the client sends a LIST the client gets the newest list of active users and break the while loop
+                         */
                         result = "LIST" + getUserList();
                         output.println(result);
+                        logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + result);
                         break;
 
                     default:
-                        System.err.println("Command Error - No such command exists!");
+                        /**
+                         * If the request from the client do now match any of the cases they get an error message
+                         */
+                        response = "J_ER 2: Unknown Command - No such command exists!";
+                        output.println(response);
+                        logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + response);
                         break;
                 }
             }
@@ -159,11 +198,14 @@ public class ServerClientHandler implements Runnable
         catch (Exception e)
         {
             /**
-             * https://stackoverflow.com/questions/12095378/difference-between-e-printstacktrace-and-system-out-printlne
+             * Log the event if the try failed
              */
-            e.printStackTrace(); //Uses System.err and should go to a log file
-            System.err.println(e.getStackTrace());
+            logger.log(Level.SEVERE, e.getStackTrace().toString());
         }
+        /**
+         * Always happens
+         * Closes the input and output
+         */
         finally
         {
             output.close();
@@ -173,17 +215,13 @@ public class ServerClientHandler implements Runnable
             }
             catch (IOException e)
             {
-                /**
-                 * https://stackoverflow.com/questions/12095378/difference-between-e-printstacktrace-and-system-out-printlne
-                 */
-                e.printStackTrace(); //Uses System.err and should go to a log file
-                System.err.println(e.getStackTrace());
+                logger.log(Level.SEVERE, e.getStackTrace().toString());
             }
         }
     }
 
     /**
-     *
+     * Sends the message out to all active clients in the ArrayList
      * @param message
      */
     private void outToAll(String message)
@@ -195,6 +233,10 @@ public class ServerClientHandler implements Runnable
         }
     }
 
+    /**
+     * Finds the users in the ArrayList
+     * @return
+     */
     private String getUserList()
     {
         String users = "";
@@ -205,11 +247,22 @@ public class ServerClientHandler implements Runnable
         return users;
     }
 
-
-    public boolean isDATAValid(String result){
-        if(result.length() <= 250){
-            return true;
+    /**
+     * Method that validates if the message the user has sent is meeting the requirements.
+     * In that moment the message is greater than 250 it fails the check
+     * @param request
+     * @return
+     */
+    public boolean IsDataValid(String request)
+    {
+        /**
+         * Only want to validate what is after the ": "
+         */
+        String resultOfValidate = request.substring(request.indexOf(":") + 2);
+        if(resultOfValidate.length() > 250)
+        {
+            return false;
         }
-        return false;
+        return true;
     }
 }
