@@ -7,6 +7,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Server
 {
@@ -18,18 +20,20 @@ public class Server
 
     /**
      * Field:
-     * ArrayList with generisc type of the class ServerClientHandler that have all the clients
+     * ArrayList with reference of class ServerClientHandler that have all the clients
      */
     private ArrayList<ServerClientHandler> allClients = new ArrayList<>();
     /**
      * Use a thread pool and limit the number of clients to e.g. 5
+     *
+     * If there is 2 threads in the threadpool only 2 clients can send commands to the server, but other clients can see the if they example sends a data messages.
      */
-    private ExecutorService treadPool = Executors.newFixedThreadPool(10);
+    private ExecutorService threadPool = Executors.newFixedThreadPool(5);
 
     /**
-     * Enable the system to log transaktions <<timestamp>> + <<request>> and <<timestamp>> + <<response>>
-     * Requests not following the protocol should give an error response back to the client and of course log the event.
+     * Calls on the static method in class SharedLog
      */
+    private Logger logger = SharedLog.getInstance();
 
     /**
      * Public method ClientListerners
@@ -52,14 +56,15 @@ public class Server
              */
             while (true)
             {
-                System.out.println("[Server] Waiting for client to join");
+                /**
+                 * Logs the message on level INFO
+                 */
+                logger.log(Level.INFO, "[Server] Waiting for client to join");
 
                 /**
-                 * The accept() method waits until a client starts up and requests a connection
-                 * on the host and port of this server.
-                 * When a connection is requested and successfully established,
-                 * the accept method returns a new Socket object (here client?) which is bound to the same
-                 * local port and has its remote address and remote port set to that of the client.
+                 * The accept() method waits until a client starts up and requests a connection on the host and port of this server.
+                 * When a connection is requested and successfully established the accept method returns a new Socket object to the client
+                 * which is bound to the same local port and has its remote address and remote port set to that of the client.
                  * https://docs.oracle.com/javase/tutorial/networking/sockets/clientServer.html
                  */
                 Socket client = listeners.accept();
@@ -77,22 +82,24 @@ public class Server
                  * Reads text lines from BufferedRead where it has been stored
                  */
                 String request = input.readLine();
+                /**
+                 * Logs the message request with the level INFO and adds the information about witch socket address the message was from
+                 */
+                logger.log(Level.INFO,client.getRemoteSocketAddress().toString() + " " + request);
 
                 /**
                  * What is the incoming clients username
                  */
                 String nextUserName = null;
 
+
+                output = new PrintWriter(client.getOutputStream(), true);
+
                 /**
                  * Nested if statement that runs if the request starts with JOIN
                  */
-                output = new PrintWriter(client.getOutputStream(), true);
-                System.out.println(request);
-
                 if (request.startsWith("JOIN"))
                 {
-                    System.out.println(request); //Just so we can see what the server got a input
-
                     /**
                      * Because the request has more than the username, we need to split the request into an Array
                      * After the first space at index 1 (where the username is)
@@ -104,38 +111,56 @@ public class Server
                      */
                     nextUserName = nextUserName.substring(0, nextUserName.length() -1);
 
-
-                        /**
-                         * What is happening here?
-                         */
-                    boolean existUserName = false;
-                        for (ServerClientHandler oneClient: allClients)
-                        {
-                            String current = oneClient.User;
-                            if(nextUserName.equals(current))
-                            {
-                                existUserName = true;
-                            }
-                        }
-                        if (existUserName)
-                        {
-                            output.println("J_ER 1234: Duplicate Username");
-                            client.close();
-                            continue;
-                        }
-                        if(!isNextUserNameValid(nextUserName))
-                        {
-                            output.println("J_ER 1235: Username is max 12 chars long, only letters, digits, ‘-‘ and ‘_’ allowed");
-                            client.close();
-                            continue;
-                        }
+                    /**
+                     * If statement that validates if the username the user want to join with correct.
+                     * If the username do not meet the requirements the client gets an errormessage, log the event, and the clients socket is closed
+                     * It is "cheaper" to have this if statement before the for loop down below because it faster break the while loop
+                     */
+                    if(!isNextUserNameValid(nextUserName))
+                    {
+                        String response = "J_ER 1235: Username is max 12 chars long, only letters, digits, ‘-‘ and ‘_’ allowed";
+                        output.println(response);
+                        logger.log(Level.INFO,client.getRemoteSocketAddress().toString() + " " +  response);
+                        client.close();
+                        logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " was closed");
+                        continue;
+                    }
 
                     /**
-                     * Client gets the message if they joined the server
+                     * For loop that checks if the username is avaliable
                      */
-                    output.println("J_OK");
+                    boolean existUserName = false;
+                    for (ServerClientHandler oneClient: allClients)
+                    {
+                        String current = oneClient.User;
+                        if(nextUserName.equals(current))
+                        {
+                            existUserName = true;
+                            break;
+                        }
+                    }
 
-                    System.out.println("[Server] Connected to client"); //Message to us if a client is connected
+                    /**
+                     * If the username was already in use the client gets an errormessage, log the event, and the clients socket is closed
+                     */
+                    if (existUserName)
+                    {
+                        String response = "J_ER 1234: Duplicate Username";
+                        output.println(response);
+                        logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + response);
+
+                        client.close();
+                        logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " was closed");
+                        continue;
+                    }
+
+                    /**
+                     * Client gets the message if they joined the server and log the event
+                     */
+                    String response = "J_OK";
+                    output.println(response);
+                    logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + response);
+
                 }
                 /**
                  * Instance of the class ServerClientHandler that get the parameter client (socket the client and server is communicate with),
@@ -143,21 +168,31 @@ public class Server
                  */
                 ServerClientHandler clientThread = new ServerClientHandler(client, allClients, nextUserName);
 
+                /**
+                 * Adds the client to the the ArrayList
+                 */
                 allClients.add(clientThread);
 
-                treadPool.execute(clientThread);
+                /**
+                 * Gives client a thread an execute the code
+                 */
+                threadPool.execute(clientThread);
             }
         }
         catch (IOException e)
         {
             /**
-             * https://stackoverflow.com/questions/12095378/difference-between-e-printstacktrace-and-system-out-printlne
+             * Log the event if the try failed
              */
-            e.printStackTrace(); //Uses System.err and should go to a log file
-            System.err.println(e.getStackTrace());
+            logger.log(Level.SEVERE, e.getStackTrace().toString());
         }
     }
 
+    /**
+     * Method that validates if the username the user want to join is meeting the requirements.
+     * @param nextUserName
+     * @return
+     */
     public boolean isNextUserNameValid(String nextUserName)
     {
         if (nextUserName.length() <= 12 && nextUserName.matches("[a-zA-Z0-9_\\-]+"))
