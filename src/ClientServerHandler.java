@@ -3,8 +3,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
+/**
+ * Class that handles all messages server sent to client
+ */
 public class ClientServerHandler implements Runnable
 {
+    /**
+     * Private field:
+     * The socket the server have, so the client can communicate with the server
+     */
     private Socket server;
 
     /**
@@ -12,6 +19,10 @@ public class ClientServerHandler implements Runnable
      */
     private BufferedReader input;
 
+    /**
+     * Gets the information about what socket the server has and reads what socket the server want to communicate on
+     * @param serverSocket
+     */
     public ClientServerHandler(Socket serverSocket)
     {
         server = serverSocket;
@@ -42,7 +53,7 @@ public class ClientServerHandler implements Runnable
      * @see Thread#run()
      */
     /**
-     * Public run method perpose is to handle inputs from the server, so it is no longer needed in the Client class!
+     * Public run method perpose is to handle inputs from the server
      */
     @Override
     public void run()
