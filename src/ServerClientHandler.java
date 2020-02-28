@@ -188,7 +188,7 @@ public class ServerClientHandler implements Runnable
                         /**
                          * If the request from the client do now match any of the cases they get an error message
                          */
-                        response = "J_ER 2: Unknown Command - No such command exists!";
+                        response = "J_ER 4: Unknown Command - No such command exists!";
                         output.println(response);
                         logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + response);
                         break;

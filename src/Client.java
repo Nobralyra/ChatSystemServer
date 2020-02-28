@@ -126,7 +126,7 @@ public class Client
                         /**
                          * If the request from the client do now match any of the cases they get an error message
                          */
-                        System.err.println("J_ER 2: Unknown Command - No such command exists!");
+                        System.err.println("J_ER 4: Unknown Command - No such command exists!");
                         break;
                 }
             }
