@@ -212,6 +212,7 @@ public class ServerClientHandler implements Runnable
             try
             {
                 input.close();
+                client.close();
             }
             catch (IOException e)
             {

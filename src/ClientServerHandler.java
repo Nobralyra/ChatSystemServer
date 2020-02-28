@@ -84,6 +84,7 @@ public class ClientServerHandler implements Runnable
             try
             {
                 input.close();
+                server.close();
             }
             catch (IOException e)
             {

@@ -1,24 +1,27 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class Client
 {
+    /**
+     * Local variable:
+     * Clients socket to communicate with the server
+     */
+    private Socket socket;
+    private BufferedReader keyboard;
+    private PrintWriter output;
+
     public void ClientConnect()
     {
+
         try
         {
-            /**
-             * Local variable:
-             * Clients socket to communicate with the server
-             */
-            Socket socket;
-
             ClientServerHandler clientServerHandler;
-
-            BufferedReader keyboard;
-            PrintWriter output;
 
             /**
              * Connection to the server
@@ -135,6 +138,26 @@ public class Client
              */
             e.printStackTrace(); //Uses System.err and should go to a log file
             System.err.println(e.getStackTrace());
+        }
+        /**
+         * Always happens
+         * Closes the input and output
+         */
+        finally
+        {
+            output.close();
+            try
+            {
+                keyboard.close();
+            }
+            catch (IOException e)
+            {
+                /**
+                 * https://stackoverflow.com/questions/12095378/difference-between-e-printstacktrace-and-system-out-printlne
+                 */
+                e.printStackTrace(); //Uses System.err and should go to a log file
+                System.err.println(e.getStackTrace());
+            }
         }
     }
 }
