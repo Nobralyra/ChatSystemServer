@@ -1,3 +1,5 @@
+package server;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,13 +16,13 @@ public class Server
 {
     /**
      * Field:
-     * Port of the Server
+     * Port of the server.Server
      */
     private int port = 9191;
 
     /**
      * Field:
-     * ArrayList with reference of class ServerClientHandler that have all the clients
+     * ArrayList with reference of class server.ServerClientHandler that have all the clients
      */
     private ArrayList<ServerClientHandler> allClients = new ArrayList<>();
     /**
@@ -31,7 +33,7 @@ public class Server
     private ExecutorService threadPool = Executors.newFixedThreadPool(5);
 
     /**
-     * Calls on the static method in class SharedLog
+     * Calls on the static method in class server.SharedLog
      */
     private Logger logger = SharedLog.getInstance();
 
@@ -59,7 +61,7 @@ public class Server
                 /**
                  * Logs the message on level INFO
                  */
-                logger.log(Level.INFO, "[Server] Waiting for client to join");
+                logger.log(Level.INFO, "[server.Server] Waiting for client to join");
 
                 /**
                  * The accept() method waits until a client starts up and requests a connection on the host and port of this server.
@@ -74,7 +76,7 @@ public class Server
                  */
                 BufferedReader input = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 /**
-                 * PrintWriter writes the output the Client gets
+                 * PrintWriter writes the output the client.Client gets
                  */
                 PrintWriter output;
 
@@ -155,7 +157,7 @@ public class Server
                     }
 
                     /**
-                     * Client gets the message if they joined the server and log the event
+                     * client.Client gets the message if they joined the server and log the event
                      */
                     String response = "J_OK";
                     output.println(response);
@@ -163,7 +165,7 @@ public class Server
 
                 }
                 /**
-                 * Instance of the class ServerClientHandler that get the parameter client (socket the client and server is communicate with),
+                 * Instance of the class server.ServerClientHandler that get the parameter client (socket the client and server is communicate with),
                  * allClients (ArrayList), nextUserName (the username from the client)
                  */
                 ServerClientHandler clientThread = new ServerClientHandler(client, allClients, nextUserName);

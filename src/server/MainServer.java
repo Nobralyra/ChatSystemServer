@@ -1,3 +1,5 @@
+package server;
+
 /**
  * The main for the server
  */

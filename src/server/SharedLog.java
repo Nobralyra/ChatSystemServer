@@ -1,3 +1,5 @@
+package server;
+
 import java.util.logging.Logger;
 
 /**
@@ -21,7 +23,7 @@ public class SharedLog
     {}
 
     /**
-     * Static method that controls the access to the SharedLog instance
+     * Static method that controls the access to the server.SharedLog instance
      * @return
      */
     public static Logger getInstance ()

@@ -1,3 +1,5 @@
+package client;
+
 /**
  * The main for the client
  */

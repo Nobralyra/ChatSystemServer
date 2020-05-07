@@ -1,3 +1,5 @@
+package server;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -35,13 +37,13 @@ public class ServerClientHandler implements Runnable
     public LocalTime IMAV = LocalTime.now();
 
     /**
-     * Calls on the static method in class SharedLog
+     * Calls on the static method in class server.SharedLog
      */
     Logger logger = SharedLog.getInstance();
 
 
     /**
-     * Overloadet constructor that Server uses to add the client in the ArrayList and allocates a thread
+     * Overloadet constructor that server.Server uses to add the client in the ArrayList and allocates a thread
      * @param clientSocket
      * @param allClients
      * @param user
@@ -111,7 +113,7 @@ public class ServerClientHandler implements Runnable
                     outToAll(User + " has left the chat room");
                     User = "";
                     outToAll("LIST" + getUserList());
-                    logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + "Client disconnected");
+                    logger.log(Level.INFO, client.getRemoteSocketAddress().toString() + " " + "client.Client disconnected");
 
                     run = false;
 

@@ -1,3 +1,5 @@
+package client;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,7 +20,6 @@ public class Client
 
     public void ClientConnect()
     {
-
         try
         {
             ClientServerHandler clientServerHandler;
@@ -28,6 +29,7 @@ public class Client
              */
             while(true)
             {
+                System.out.println("Please join the server with: JOIN <<user_name>>, 127.0.0.1:9191");
                 /**
                  * Reads what the user has written on the keyboard
                  */
@@ -68,7 +70,7 @@ public class Client
             }
 
             /**
-             * The constructor from ClientServerHandler now gets the information about where the communication from the server and client is
+             * The constructor from client.ClientServerHandler now gets the information about where the communication from the server and client is
              */
             clientServerHandler = new ClientServerHandler(socket);
             /**
@@ -78,6 +80,9 @@ public class Client
 
             /**
              * Sends a heartbeat alive every 60 seconds
+             * Anonymous inner class
+             * delay is how long is there to the first execution
+             * period is time between task execution
              */
             Timer timer = new Timer();
             timer.scheduleAtFixedRate(new TimerTask()
@@ -94,6 +99,7 @@ public class Client
              */
             while(true)
             {
+                System.out.println("Use the following commands: \n\t DATA <<user_name>>: <<free text…>> \n\t LIST \n\t QUIT");
                 String command = keyboard.readLine();
 
                 /**
@@ -104,7 +110,7 @@ public class Client
                 {
                     case "QUIT":
                         /**
-                         * The Client must send a Quit message when it is closing.
+                         * The client.Client must send a Quit message when it is closing.
                          * Clients system then exit
                          */
                         output.println("QUIT");
