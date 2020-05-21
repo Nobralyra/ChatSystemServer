@@ -28,7 +28,8 @@ public class Server
     /**
      * Use a thread pool and limit the number of clients to e.g. 5
      *
-     * If there is 2 threads in the threadpool only 2 clients can send commands to the server, but other clients can see the if they example sends a data messages.
+     * If there is 2 threads in the threadpool only 2 clients can send commands to the server,
+     * but other clients can see the if they example sends a data messages.
      */
     private ExecutorService threadPool = Executors.newFixedThreadPool(5);
 
